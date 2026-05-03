@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级JSON规则替换工具 - 可自定义匹配与替换字段</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #2c3e50;
+        }
+        .main-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: #1a73e8;
+        }
+        .subtitle {
+            color: #5f6368;
+            margin-bottom: 2rem;
+            border-left: 4px solid #1a73e8;
+            padding-left: 1rem;
+        }
+        /* 规则配置区 */
+        .config-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+        }
+        .rule-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+        .rule-card {
+            flex: 1;
+            min-width: 280px;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #1a73e8;
+        }
+        .rule-card h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .rule-card label {
+            display: block;
+            margin: 12px 0 5px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: #1e293b;
+        }
+        .rule-card input, .rule-card select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+        .rule-card input:focus, .rule-card select:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26,115,232,0.2);
+        }
+        .match-group {
+            background: #ffffff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #e2e8f0;
+        }
+        .match-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .match-item input {
+            flex: 1;
+        }
+        .match-item button {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .add-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+        .replace-fields {
+            margin-top: 15px;
+        }
+        .replace-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .replace-row input {
+            flex: 1;
+        }
+        .badge {
+            background: #e2e8f0;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: normal;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button.primary {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        button.secondary {
+            background: #64748b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button.danger {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .file-area {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .file-card {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .file-card textarea {
+            width: 100%;
+            height: 280px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fefce8;
+        }
+        .result-area {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .result-area textarea {
+            width: 100%;
+            height: 350px;
+            font-family: monospace;
+            font-size: 11px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .stats {
+            background: #e6f7e6;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+        hr {
+            margin: 15px 0;
+            border-color: #e2e8f0;
+        }
+        .tooltip-icon {
+            cursor: help;
+            border-bottom: 1px dashed;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="main-container">
+    <h1>🔧 高级JSON规则替换工具</h1>
+    <div class="subtitle">
+        支持深度嵌套对象 · 自定义匹配字段(多个) · 自定义替换字段(多个) · 完全可配置
+    </div>
+
+    <!-- 规则配置面板 -->
+    <div class="config-panel">
+        <h3>⚙️ 匹配与替换规则</h3>
+        <div class="rule-section">
+            <!-- 匹配条件卡片 -->
+            <div class="rule-card">
+                <h3>🎯 匹配条件 (用于查找源对象)</h3>
+                <div>
+                    <label>🔑 必须存在的字段名 <span class="tooltip-icon" title="对象中必须包含这些字段才会被视为候选">ⓘ</span></label>
+                    <div id="requiredFieldsContainer">
+                        <div class="match-item">
+                            <input type="text" placeholder="字段名, 例如: name" value="name" class="required-field-input">
+                            <button onclick="removeRequiredField(this)">✖</button>
+                        </div>
+                        <div class="match-item">
+                            <input type="text" placeholder="字段名, 例如: _拡大率" value="_拡大率" class="required-field-input">
+                            <button onclick="removeRequiredField(this)">✖</button>
+                        </div>
+                    </div>
+                    <button class="add-btn" onclick="addRequiredField()">+ 添加必须字段</button>
+                </div>
+                <div style="margin-top: 15px;">
+                    <label>🔗 关键匹配字段 (作为唯一键) <span class="tooltip-icon" title="使用这些字段的值组合来匹配两个JSON中的对象">ⓘ</span></label>
+                    <div id="keyFieldsContainer">
+                        <div class="match-item">
+                            <input type="text" placeholder="字段名, 例如: name" value="name" class="key-field-input">
+                            <button onclick="removeKeyField(this)">✖</button>
+                        </div>
+                    </div>
+                    <button class="add-btn" onclick="addKeyField()">+ 添加组合键字段</button>
+                    <div class="stats" style="margin-top: 12px; background:#eef2ff;">
+                        💡 说明：源文件(30.json)和目标文件(40.json)中，只要<strong>必须存在的字段</strong>都存在，并且<strong>关键字段的值组合</strong>完全相同，就会将源对象的指定替换字段值复制到目标对象。
+                    </div>
+                </div>
+            </div>
+
+            <!-- 替换字段卡片 -->
+            <div class="rule-card">
+                <h3>✏️ 替换字段映射</h3>
+                <label>📤 要替换的目标字段 (从源复制到目标)</label>
+                <div id="replaceFieldsContainer">
+                    <div class="replace-row">
+                        <input type="text" placeholder="源字段名" value="_ズレX" class="source-field">
+                        <span style="margin:0 5px">→</span>
+                        <input type="text" placeholder="目标字段名" value="_ズレX" class="target-field">
+                        <button onclick="removeReplaceField(this)">✖</button>
+                    </div>
+                    <div class="replace-row">
+                        <input type="text" placeholder="源字段名" value="_ズレY" class="source-field">
+                        <span style="margin:0 5px">→</span>
+                        <input type="text" placeholder="目标字段名" value="_ズレY" class="target-field">
+                        <button onclick="removeReplaceField(this)">✖</button>
+                    </div>
+                </div>
+                <button class="add-btn" onclick="addReplaceField()">+ 添加替换映射</button>
+                <div class="stats" style="margin-top: 12px;">
+                    📌 注意：源字段名从30.json中读取，目标字段名是要修改的40.json中的字段。如果不填目标字段名，默认使用源字段名。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件导入区 -->
+    <div class="file-area">
+        <div class="file-card">
+            <h3>📂 源文件 (30.json) <span style="font-weight:normal">提供替换值</span></h3>
+            <div>
+                <input type="file" id="srcFile" accept=".json" style="margin-bottom: 8px;">
+                <button class="secondary" onclick="loadFileToTextarea('src')">加载到下方编辑器</button>
+            </div>
+            <textarea id="srcJson" placeholder='粘贴或导入源JSON内容 (支持任意嵌套结构) ...'></textarea>
+            <div class="info" id="srcInfo" style="font-size:12px; margin-top:5px"></div>
+        </div>
+        <div class="file-card">
+            <h3>📂 目标文件 (40.json) <span style="font-weight:normal">将被修改</span></h3>
+            <div>
+                <input type="file" id="tgtFile" accept=".json" style="margin-bottom: 8px;">
+                <button class="secondary" onclick="loadFileToTextarea('tgt')">加载到下方编辑器</button>
+            </div>
+            <textarea id="tgtJson" placeholder='粘贴或导入目标JSON内容 ...'></textarea>
+            <div class="info" id="tgtInfo" style="font-size:12px; margin-top:5px"></div>
+        </div>
+    </div>
+
+    <div class="button-group">
+        <button class="primary" onclick="executeReplace()">🚀 执行替换 (按当前规则)</button>
+        <button class="secondary" onclick="clearAll()">🗑️ 清空所有内容</button>
+        <button class="secondary" onclick="downloadResult()">💾 下载替换结果</button>
+    </div>
+
+    <!-- 结果显示区 -->
+    <div class="result-area">
+        <h3>📄 替换后的结果 (可下载)</h3>
+        <textarea id="resultJson" placeholder="替换后的JSON会显示在这里..."></textarea>
+        <div id="resultStats" class="stats"></div>
+    </div>
+</div>
+
+<script>
+    // ---------- 动态规则管理 ----------
+    function addRequiredField() {
+        const container = document.getElementById('requiredFieldsContainer');
+        const div = document.createElement('div');
+        div.className = 'match-item';
+        div.innerHTML = `<input type="text" placeholder="字段名" class="required-field-input"><button onclick="removeRequiredField(this)">✖</button>`;
+        container.appendChild(div);
+    }
+    function removeRequiredField(btn) {
+        btn.parentElement.remove();
+    }
+    function addKeyField() {
+        const container = document.getElementById('keyFieldsContainer');
+        const div = document.createElement('div');
+        div.className = 'match-item';
+        div.innerHTML = `<input type="text" placeholder="关键字段名" class="key-field-input"><button onclick="removeKeyField(this)">✖</button>`;
+        container.appendChild(div);
+    }
+    function removeKeyField(btn) {
+        btn.parentElement.remove();
+    }
+    function addReplaceField() {
+        const container = document.getElementById('replaceFieldsContainer');
+        const div = document.createElement('div');
+        div.className = 'replace-row';
+        div.innerHTML = `<input type="text" placeholder="源字段名" class="source-field"><span style="margin:0 5px">→</span><input type="text" placeholder="目标字段名" class="target-field"><button onclick="removeReplaceField(this)">✖</button>`;
+        container.appendChild(div);
+    }
+    function removeReplaceField(btn) {
+        btn.parentElement.remove();
+    }
+
+    // 获取当前配置
+    function getRules() {
+        const requiredFields = Array.from(document.querySelectorAll('#requiredFieldsContainer .required-field-input'))
+            .map(inp => inp.value.trim()).filter(v => v !== "");
+        const keyFields = Array.from(document.querySelectorAll('#keyFieldsContainer .key-field-input'))
+            .map(inp => inp.value.trim()).filter(v => v !== "");
+        const replaceMappings = Array.from(document.querySelectorAll('#replaceFieldsContainer .replace-row')).map(row => {
+            const src = row.querySelector('.source-field')?.value.trim();
+            let tgt = row.querySelector('.target-field')?.value.trim();
+            if (!tgt) tgt = src;
+            return { sourceField: src, targetField: tgt };
+        }).filter(m => m.sourceField);
+        return { requiredFields, keyFields, replaceMappings };
+    }
+
+    // 递归遍历对象树，收集所有符合“必须字段存在”的对象
+    function collectObjectsWithRequiredFields(obj, requiredFields, currentPath = 'root') {
+        const results = [];
+        if (!obj || typeof obj !== 'object') return results;
+
+        // 检查当前对象是否包含所有 requiredFields
+        const hasAll = requiredFields.length === 0 || requiredFields.every(f => obj.hasOwnProperty(f));
+        if (hasAll) {
+            results.push({ obj, path: currentPath });
+        }
+
+        // 递归
+        if (Array.isArray(obj)) {
+            for (let i = 0; i < obj.length; i++) {
+                const sub = obj[i];
+                results.push(...collectObjectsWithRequiredFields(sub, requiredFields, `${currentPath}[${i}]`));
+            }
+        } else {
+            for (let key in obj) {
+                if (obj.hasOwnProperty(key) && typeof obj[key] === 'object') {
+                    results.push(...collectObjectsWithRequiredFields(obj[key], requiredFields, `${currentPath}.${key}`));
+                }
+            }
+        }
+        return results;
+    }
+
+    // 从对象中提取复合键值 (基于 keyFields)
+    function getCompositeKey(obj, keyFields) {
+        const parts = [];
+        for (let kf of keyFields) {
+            if (obj.hasOwnProperty(kf)) {
+                let val = obj[kf];
+                // 将任意值转为字符串，null/undefined 特殊处理
+                parts.push(val === undefined ? 'undefined' : (val === null ? 'null' : String(val)));
+            } else {
+                parts.push('__MISSING__');
+            }
+        }
+        return parts.join('|##|');
+    }
+
+    // 执行替换核心逻辑
+    function executeReplace() {
+        const srcText = document.getElementById('srcJson').value.trim();
+        const tgtText = document.getElementById('tgtJson').value.trim();
+        if (!srcText || !tgtText) {
+            alert("❌ 请先加载或粘贴源文件和目标文件的内容");
+            return;
+        }
+
+        try {
+            const srcData = JSON.parse(srcText);
+            const tgtData = JSON.parse(tgtText);
+            const rules = getRules();
+
+            if (rules.keyFields.length === 0) {
+                alert("⚠️ 请至少添加一个关键匹配字段 (例如 name) 用于匹配对象");
+                return;
+            }
+
+            // 1. 从源数据中收集所有符合条件的对象并建立映射表 (复合键 -> 源对象)
+            const srcObjects = collectObjectsWithRequiredFields(srcData, rules.requiredFields);
+            const srcMap = new Map();  // key: compositeKey, value: 源对象
+            for (const { obj } of srcObjects) {
+                const key = getCompositeKey(obj, rules.keyFields);
+                if (!srcMap.has(key)) {
+                    srcMap.set(key, obj);
+                } else {
+                    console.warn(`重复的复合键: ${key}, 只会保留第一个`);
+                }
+            }
+
+            // 2. 从目标数据中收集所有符合条件的目标对象
+            const tgtObjects = collectObjectsWithRequiredFields(tgtData, rules.requiredFields);
+
+            let matchedCount = 0;
+            let replacedCount = 0;
+            const unmatchedKeys = new Set();
+            const replaceDetails = [];
+
+            // 3. 遍历目标对象，匹配并替换
+            for (const { obj: tgtObj, path } of tgtObjects) {
+                const key = getCompositeKey(tgtObj, rules.keyFields);
+                if (srcMap.has(key)) {
+                    matchedCount++;
+                    const srcObj = srcMap.get(key);
+                    // 执行字段替换
+                    for (const mapping of rules.replaceMappings) {
+                        const sourceField = mapping.sourceField;
+                        const targetField = mapping.targetField;
+                        if (srcObj.hasOwnProperty(sourceField)) {
+                            const oldVal = tgtObj[targetField];
+                            const newVal = srcObj[sourceField];
+                            if (oldVal !== newVal) {
+                                tgtObj[targetField] = newVal;
+                                replacedCount++;
+                                replaceDetails.push({
+                                    path: path,
+                                    key: key,
+                                    field: targetField,
+                                    old: oldVal,
+                                    new: newVal
+                                });
+                            } else if (oldVal === undefined && newVal !== undefined) {
+                                // 目标原本没有该字段
+                                tgtObj[targetField] = newVal;
+                                replacedCount++;
+                                replaceDetails.push({
+                                    path: path,
+                                    key: key,
+                                    field: targetField,
+                                    old: '(不存在)',
+                                    new: newVal
+                                });
+                            }
+                        }
+                    }
+                } else {
+                    unmatchedKeys.add(key);
+                }
+            }
+
+            // 显示结果
+            const resultJson = JSON.stringify(tgtData, null, 2);
+            document.getElementById('resultJson').value = resultJson;
+
+            // 生成统计报告
+            let statsHtml = `<strong>✅ 替换统计</strong><br>
+                            📌 源文件匹配对象数: ${srcMap.size}<br>
+                            🎯 目标文件符合规则的对象数: ${tgtObjects.length}<br>
+                            🔗 成功匹配数量: ${matchedCount}<br>
+                            ✏️ 实际替换字段次数: ${replacedCount}<br>
+                            ❓ 未匹配的关键键数量: ${unmatchedKeys.size}`;
+            if (unmatchedKeys.size > 0 && unmatchedKeys.size <= 15) {
+                statsHtml += `<br>⚠️ 未匹配的键值示例: ${Array.from(unmatchedKeys).slice(0, 8).join(', ')}`;
+            } else if (unmatchedKeys.size > 15) {
+                statsHtml += `<br>⚠️ 未匹配键过多，仅显示前8个: ${Array.from(unmatchedKeys).slice(0, 8).join(', ')} ...`;
+            }
+            if (replaceDetails.length > 0 && replaceDetails.length <= 12) {
+                statsHtml += `<br><details><summary>📝 查看替换详情 (${replaceDetails.length}条变更)</summary><pre style="font-size:11px; margin-top:5px">`;
+                replaceDetails.slice(0, 30).forEach(d => {
+                    statsHtml += `路径: ${d.path} | 键(${d.key}) | 字段 ${d.field}: ${d.old} → ${d.new}\n`;
+                });
+                if (replaceDetails.length > 30) statsHtml += `... 还有 ${replaceDetails.length-30} 条变更未显示`;
+                statsHtml += `</pre></details>`;
+            }
+
+            document.getElementById('resultStats').innerHTML = statsHtml;
+            alert(`替换完成！成功匹配 ${matchedCount} 个对象，实际修改字段 ${replacedCount} 次。`);
+
+        } catch (err) {
+            alert("JSON解析错误: " + err.message);
+            console.error(err);
+        }
+    }
+
+    // 文件加载辅助
+    function loadFileToTextarea(type) {
+        let fileInput, textareaId;
+        if (type === 'src') {
+            fileInput = document.getElementById('srcFile');
+            textareaId = 'srcJson';
+        } else {
+            fileInput = document.getElementById('tgtFile');
+            textareaId = 'tgtJson';
+        }
+        if (!fileInput.files.length) {
+            alert("请先选择文件");
+            return;
+        }
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById(textareaId).value = e.target.result;
+            const infoSpan = type === 'src' ? document.getElementById('srcInfo') : document.getElementById('tgtInfo');
+            if (infoSpan) infoSpan.innerText = `已加载: ${file.name} (${(file.size/1024).toFixed(2)} KB)`;
+        };
+        reader.onerror = () => alert("读取文件失败");
+        reader.readAsText(file, "UTF-8");
+    }
+
+    function clearAll() {
+        if (confirm("确定清空所有JSON内容和结果吗？")) {
+            document.getElementById('srcJson').value = '';
+            document.getElementById('tgtJson').value = '';
+            document.getElementById('resultJson').value = '';
+            document.getElementById('resultStats').innerHTML = '';
+            document.getElementById('srcInfo').innerText = '';
+            document.getElementById('tgtInfo').innerText = '';
+            // 可选重置文件选择
+            document.getElementById('srcFile').value = '';
+            document.getElementById('tgtFile').value = '';
+        }
+    }
+
+    function downloadResult() {
+        const resultText = document.getElementById('resultJson').value;
+        if (!resultText) {
+            alert("没有结果数据，请先执行替换");
+            return;
+        }
+        const blob = new Blob([resultText], {type: 'application/json'});
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.download = `replaced_${new Date().toISOString().slice(0,19).replace(/:/g, '-')}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // 示例: 添加默认帮助提示
+    window.onload = () => {
+        // 预先给个说明
+        const statsDiv = document.getElementById('resultStats');
+        if (statsDiv) statsDiv.innerHTML = "💡 配置好规则后，点击“执行替换”，工具会递归遍历JSON，匹配对象并替换指定字段。";
+    };
+</script>
+</body>
+</html>
